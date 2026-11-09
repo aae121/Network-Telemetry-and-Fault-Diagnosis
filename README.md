@@ -6,19 +6,37 @@ The scope is intentionally narrow: one IPv4 destination, one interface, and a lo
 
 ## Data path
 
-```text
-ping + ip commands
-        |
-        v
-Python exporter :8000/metrics ---> Prometheus :9090 ---> Grafana :3000
-        |                                  |                    |
-        +--> timestamped snapshot          +--> alert rules ----+--> email
+```mermaid
+flowchart LR
+  subgraph wsl["Ubuntu on WSL"]
+    monitor["Python exporter<br/>metrics_server.py :8000/metrics"]
+    ping["ping: five ICMP probes"]
+    ipcmd["ip: interface and route state"]
+    snapshot["Snapshot file<br/>snapshots/*.txt<br/>on first unreachable check"]
+    capture["tcpdump<br/>PCAP capture"]
+    target["Probe target<br/>1.1.1.1 (normal)"]
 
-tcpdump ---> PCAP evidence
+    monitor -->|"runs"| ping
+    ping -->|"RTT, loss, reachability"| monitor
+    monitor -->|"runs"| ipcmd
+    ipcmd -->|"link and route output"| monitor
+    monitor -->|"reachability transition"| snapshot
+    ping -.->|"same ICMP traffic observed on eth0"| capture
+    ping -->|"ICMP echo request / reply"| target
+  end
+
+  subgraph containers["Docker Compose"]
+    prometheus["Prometheus<br/>15 s scrape"]
+    grafana["Grafana<br/>dashboard + six alert rules"]
+  end
+
+  prometheus -->|"GET /metrics"| monitor
+  monitor -->|"metrics response"| prometheus
+  prometheus -->|"time series"| grafana
+  grafana -->|"firing notification"| email["Email contact point"]
 ```
 
-The exporter runs in Ubuntu under WSL. Prometheus runs in Docker and reaches the exporter through `host.docker.internal`; Compose maps that name to the host gateway. Prometheus scrapes every 15 seconds. The web ports bind to localhost.
-
+Solid arrows show checks and metric exchange. The dotted arrow shows tcpdump observing the same ICMP traffic; capture runs separately from the exporter.
 ## Signals
 
 | Metric | Source | Interpretation |
@@ -146,3 +164,5 @@ Runtime snapshots are written under `snapshots/` and ignored by Git. The sanitiz
 This version watches one IPv4 destination and one interface. ICMP can be filtered independently of application traffic. Route changes are detected by comparing command output, rather than subscribing to kernel route events. The exporter automatically saves a snapshot on a reachability transition; tcpdump is started separately so packet-capture privileges and capture duration stay explicit.
 
 The next useful engineering steps are to provision the Grafana dashboard and rules from files, add tests around ping parsing and state transitions, monitor multiple destinations, and use route events instead of text comparison.
+
+
