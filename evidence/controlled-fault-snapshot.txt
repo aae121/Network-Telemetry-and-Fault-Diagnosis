@@ -1,0 +1,25 @@
+Captured at: 2026-11-09T23:58:29+02:00
+Reason: controlled fault capture test
+
+Ping to 192.0.2.1:
+PING 192.0.2.1 (192.0.2.1) 56(84) bytes of data.
+
+--- 192.0.2.1 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2042ms
+
+Interfaces:
+lo               UNKNOWN        [MAC redacted] <LOOPBACK,UP,LOWER_UP> 
+eth0             UP             [MAC redacted] <BROADCAST,MULTICAST,UP,LOWER_UP> 
+docker0          DOWN           [MAC redacted] <NO-CARRIER,BROADCAST,MULTICAST,UP> 
+br-960f78d18828  DOWN           [MAC redacted] <NO-CARRIER,BROADCAST,MULTICAST,UP> 
+br-51b888b71740  UP             [MAC redacted] <BROADCAST,MULTICAST,UP,LOWER_UP> 
+veth572ee5d@if2  UP             [MAC redacted] <BROADCAST,MULTICAST,UP,LOWER_UP> 
+vethf5dc2a2@if2  UP             [MAC redacted] <BROADCAST,MULTICAST,UP,LOWER_UP>
+
+Routes:
+default via [private IPv4 redacted] dev eth0 proto kernel onlink 
+[private IPv4 redacted] dev docker0 proto kernel scope link src [private IPv4 redacted] linkdown 
+[private IPv4 redacted] dev br-51b888b71740 proto kernel scope link src [private IPv4 redacted] 
+[private IPv4 redacted] dev br-960f78d18828 proto kernel scope link src [private IPv4 redacted] linkdown 
+[private IPv4 redacted] dev eth0 proto kernel scope link src [private IPv4 redacted]
+
